@@ -54,6 +54,7 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); font
 .brand-sub { font-size: 12px; color: #555; margin-top: 2px; letter-spacing: .08em; text-transform: uppercase; font-family: var(--mono); }
 
 .sb-section { display: flex; flex-direction: column; gap: 6px; }
+.sb-section.hidden { display: none; }
 .sb-label {
   font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
   color: #444; font-family: var(--mono); margin-bottom: 2px;
@@ -93,6 +94,7 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); font
 .check-row.checked .check-count { color: #666; }
 
 .divider { height: 1px; background: #222; margin: 2px 0; }
+.divider.hidden { display: none; }
 
 /* SELECT ALL / NONE */
 .sel-btns { display: flex; gap: 6px; margin-bottom: 4px; }
@@ -104,7 +106,9 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); font
 .sel-btn:hover { color: #aaa; }
 
 .sb-stats { margin-top: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.sb-stats.empresas-only { grid-template-columns: 1fr; }
 .sb-stat { background: #111; border-radius: 5px; padding: 9px 10px; }
+.sb-stat.hidden { display: none; }
 .sb-stat .v { font-family: var(--mono); font-size: 18px; color: #fff; font-weight: 500; line-height: 1; }
 .sb-stat .l { font-size: 11px; color: #444; text-transform: uppercase; letter-spacing: .08em; margin-top: 3px; }
 
@@ -128,8 +132,52 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); font
 .page-title { font-size: 18px; font-weight: 500; }
 .page-sub { font-size: 14px; color: var(--muted); margin-left: auto; font-family: var(--mono); }
 
+.view-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+.view-tab {
+  border: 0;
+  background: #E7E1D7;
+  color: var(--muted);
+  border-radius: 12px;
+  padding: 14px 18px;
+  min-width: 180px;
+  cursor: pointer;
+  text-align: left;
+  transition: background .12s, color .12s, transform .12s;
+}
+.view-tab:hover {
+  background: #DDD6CB;
+  color: var(--text);
+}
+.view-tab.active {
+  background: #2E2A25;
+  color: #fff;
+}
+.view-tab-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 500;
+}
+.view-tab-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.view-tab-dot.leinners {
+  background: linear-gradient(135deg, var(--cop) 0%, var(--cop) 50%, var(--sup) 50%, var(--sup) 100%);
+}
+.view-tab-dot.empresas { background: var(--agenda); }
+
 /* LEGEND */
 .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 28px; }
+.legend.hidden { display: none; }
 .legend-item { display: flex; align-items: center; gap: 5px; font-size: 13px; color: var(--muted); }
 .legend-pill {
   height: 14px; padding: 0 7px; border-radius: 10px;
@@ -250,6 +298,15 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); font
   flex-shrink: 0; white-space: nowrap;
 }
 
+.empty-panel {
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
 </style>
 </head>
 <body>
@@ -261,7 +318,7 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); font
   </div>
 
   <!-- TIPO -->
-  <div class="sb-section">
+  <div class="sb-section" data-leinner-only>
     <div class="sb-label">Tipo de correo</div>
     <div class="sel-btns">
       <button class="sel-btn" onclick="selectAll('type')">todos</button>
@@ -289,10 +346,10 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); font
     </label>
   </div>
 
-  <div class="divider"></div>
+  <div class="divider" data-leinner-only></div>
 
   <!-- PROGRAMA -->
-  <div class="sb-section">
+  <div class="sb-section" data-leinner-only>
     <div class="sb-label">Programa</div>
     <div class="sel-btns">
       <button class="sel-btn" onclick="selectAll('prog')">todos</button>
@@ -315,10 +372,10 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); font
     </label>
   </div>
 
-  <div class="divider"></div>
+  <div class="divider" data-leinner-only></div>
 
   <!-- LAB -->
-  <div class="sb-section">
+  <div class="sb-section" data-leinner-only>
     <div class="sb-label">Laboratorio</div>
     <div class="sel-btns">
       <button class="sel-btn" onclick="selectAll('lab')">todos</button>
@@ -341,19 +398,27 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); font
     </label>
   </div>
 
-  <div class="divider"></div>
+  <div class="divider" data-leinner-only></div>
 
   <div class="sb-stats">
-    <div class="sb-stat"><div class="v">37</div><div class="l">Total</div></div>
-    <div class="sb-stat"><div class="v" id="st-visible">37</div><div class="l">Visibles</div></div>
-    <div class="sb-stat"><div class="v">6</div><div class="l">Sprints</div></div>
-    <div class="sb-stat"><div class="v">3</div><div class="l">Labs</div></div>
+    <div class="sb-stat"><div class="v" id="st-total">50</div><div class="l">Total</div></div>
+    <div class="sb-stat" data-leinner-only><div class="v" id="st-visible">37</div><div class="l">Visibles</div></div>
+    <div class="sb-stat" data-leinner-only><div class="v">6</div><div class="l">Sprints</div></div>
+    <div class="sb-stat" data-leinner-only><div class="v">3</div><div class="l">Labs</div></div>
   </div>
 </aside>
   <main class="main">
     <div class="topbar">
       <span class="page-title">Timeline de comunicaciones operativas</span>
       <span class="page-sub">copsup@ → equipos · 25/26</span>
+    </div>
+    <div class="view-tabs">
+      <button class="view-tab active" type="button" data-view="leinners">
+        <span class="view-tab-label"><span class="view-tab-dot leinners"></span>LEINNers</span>
+      </button>
+      <button class="view-tab" type="button" data-view="empresas">
+        <span class="view-tab-label"><span class="view-tab-dot empresas"></span>Empresas</span>
+      </button>
     </div>
     <div class="legend">
       <div class="legend-item"><span class="legend-pill pill-agenda">agenda</span> Agenda de sprint</div>
@@ -406,6 +471,21 @@ const DATA = [
   {d:"2026-01-15",t:"17:09",sprint:"cierre",type:"accion",dest:["copbcn","copmad"],s:"🏁 Cierre de etapa COP y entrega de informe",sum:"Instrucciones finales para cerrar la etapa COP y entregar el informe"},
 ];
 
+const ENTERPRISE_DATA = [
+  {d:"2025-10-30",sprint:"sp2",
+   s:"¡Acabamos el segundo sprint! ¿Cómo va el proceso?",
+   sum:"Seguimiento a todas las empresas reto tras finalizar el Sprint 2, preguntando por el avance de los equipos",
+   empresas:["Danone","INMESA","Fund. Pegasus","Social Nest","21 Gramos","Setga"]},
+  {d:"2025-12-05",sprint:"cierre",
+   s:"Invitación al Demo Day",
+   sum:"Invitación a las empresas reto para asistir al Demo Day del programa",
+   empresas:["Athlos Travel","Casa Nápoli"]},
+  {d:"2026-01-20",sprint:"cierre",
+   s:"Muchas gracias - Proceso de Cierre",
+   sum:"Agradecimiento formal y comunicación del proceso de cierre con las empresas reto",
+   empresas:["Anaya","INMESA","Danone"]},
+];
+
 const SPRINTS = [
   {id:"pre",    label:"Previo",   dates:"Jul 2025"},
   {id:"sp1",    label:"Sprint 1", dates:"Sep 2025"},
@@ -425,6 +505,7 @@ const DEST_META = {
 };
 
 const TYPE_LABELS = {agenda:"Agenda", recurso:"Recurso", accion:"Acción", cierre:"Cierre"};
+let activeView = 'leinners';
 
 function getChecked(group) {
   return [...document.querySelectorAll(`.check-row.checked[data-group="${group}"]`)]
@@ -444,6 +525,19 @@ function selectNone(group) {
 document.querySelectorAll('.check-row').forEach(row => {
   row.addEventListener('click', () => {
     row.classList.toggle('checked');
+    render();
+  });
+});
+
+document.querySelectorAll('.view-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    activeView = tab.dataset.view;
+    document.querySelectorAll('.view-tab').forEach(btn => btn.classList.toggle('active', btn === tab));
+    document.querySelectorAll('[data-leinner-only]').forEach(el => {
+      el.classList.toggle('hidden', activeView === 'empresas');
+    });
+    document.querySelector('.sb-stats')?.classList.toggle('empresas-only', activeView === 'empresas');
+    document.querySelector('.legend')?.classList.toggle('hidden', activeView === 'empresas');
     render();
   });
 });
@@ -492,6 +586,7 @@ function render() {
   const progs = getChecked('prog');
   const labs  = getChecked('lab');
   const showInd = document.getElementById('toggle-ind-row') && document.getElementById('toggle-ind-row').classList.contains('checked');
+  const activeData = activeView === 'empresas' ? ENTERPRISE_DATA : DATA;
 
   const container = document.getElementById('timeline');
   const noRes = document.getElementById('no-results');
@@ -499,12 +594,30 @@ function render() {
   let html = '';
 
   SPRINTS.forEach(sp => {
-    const emails = DATA.filter(e => e.sprint === sp.id && emailMatchesFilters(e, types, progs, labs));
-    const indEmails = showInd ? IND_DATA.filter(e => e.sprint === sp.id) : [];
+    const emails = activeView === 'empresas'
+      ? activeData.filter(e => e.sprint === sp.id)
+      : activeData.filter(e => e.sprint === sp.id && emailMatchesFilters(e, types, progs, labs));
+    const indEmails = activeView === 'leinners' && showInd ? IND_DATA.filter(e => e.sprint === sp.id) : [];
     if (emails.length === 0 && indEmails.length === 0) return;
     totalVisible += emails.length + indEmails.length;
 
     const cards = emails.map(e => {
+      if (activeView === 'empresas') {
+        return `<div class="card">
+          <div class="card-stripe stripe-cop"></div>
+          <div class="card-date">
+            <div class="cd">${fmtDate(e.d)}</div>
+          </div>
+          <div class="card-body">
+            <div class="card-subject">${esc(e.s)}</div>
+            <div class="card-summary">${esc(e.sum)}</div>
+          </div>
+          <div class="card-meta">
+            <span class="type-pill pill-recurso">Empresas</span>
+          </div>
+        </div>`;
+      }
+
       const dests = visibleDests(e, progs, labs);
       const hasC = dests.some(d => DEST_META[d].prog === 'cop');
       const hasS = dests.some(d => DEST_META[d].prog === 'sup');
@@ -556,9 +669,13 @@ function render() {
     </div>`;
   });
 
-  container.innerHTML = html || '';
-  noRes.style.display = totalVisible === 0 ? 'block' : 'none';
+  container.innerHTML = html || (activeView === 'empresas'
+    ? `<div class="empty-panel">Todavía no hay correos cargados en la vista de Empresas.</div>`
+    : '');
+  noRes.style.display = totalVisible === 0 && activeView !== 'empresas' ? 'block' : 'none';
   document.getElementById('st-visible').textContent = totalVisible;
+  const totalCount = activeData.length + (activeView === 'leinners' ? IND_DATA.length : 0);
+  document.getElementById('st-total').textContent = totalCount;
 }
 
 render();
