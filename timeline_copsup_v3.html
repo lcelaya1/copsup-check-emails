@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Timeline Operaciones COP/SUP</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F2EFE9;
+  --surface: #FDFCFA;
+  --border: #D8D3CA;
+  --text: #1A1814;
+  --muted: #7A7469;
+  --faint: #E8E4DD;
+
+  --agenda:  #1A5C8A;  --agenda-bg:  #EBF4FF;
+  --recurso: #7A6000;  --recurso-bg: #FBF5DC;
+  --accion:  #8A4B00;  --accion-bg:  #FFF4E3;
+  --cierre:  #7A1A3A;  --cierre-bg:  #FCEEF3;
+
+  --cop: #6B3FA0;   --cop-bg: #F4EEFF;  --cop-tint: #FAF7FF;  --cop-border: #C4A8E8;
+  --sup: #2D6E3E;   --sup-bg: #EBF6EF;  --sup-tint: #F3FBF5;  --sup-border: #89C9A0;
+
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--sans); background: var(--bg); color: var(--text); font-size: 16px; }
+
+.shell {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  align-items: start;
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  background: var(--text);
+  padding: 20px 14px;
+  position: sticky;
+  top: 0;
+  align-self: start;
+  min-height: 100vh;
+  overflow-y: auto;
+  display: flex; flex-direction: column; gap: 16px;
+}
+
+
+.brand-title { font-family: var(--mono); font-size: 16px; color: #fff; font-weight: 500; }
+.brand-sub { font-size: 12px; color: #555; margin-top: 2px; letter-spacing: .08em; text-transform: uppercase; font-family: var(--mono); }
+
+.sb-section { display: flex; flex-direction: column; gap: 6px; }
+.sb-label {
+  font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+  color: #444; font-family: var(--mono); margin-bottom: 2px;
+}
+
+/* CHECKBOX ROWS */
+.check-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 8px; border-radius: 5px; cursor: pointer;
+  transition: background .12s; user-select: none;
+}
+.check-row:hover { background: #1e1e1e; }
+
+.check-box {
+  width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0;
+  border: 1.5px solid #444; position: relative;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .12s, border-color .12s;
+}
+.check-row.checked .check-box {
+  border-color: transparent;
+}
+.check-box::after {
+  content: '';
+  width: 7px; height: 4px;
+  border-left: 1.5px solid #fff;
+  border-bottom: 1.5px solid #fff;
+  transform: rotate(-45deg) translateY(-1px);
+  opacity: 0; transition: opacity .1s;
+}
+.check-row.checked .check-box::after { opacity: 1; }
+
+.check-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.check-label { font-size: 14px; color: #aaa; }
+.check-row.checked .check-label { color: #fff; }
+.check-count { margin-left: auto; font-family: var(--mono); font-size: 12px; color: #444; }
+.check-row.checked .check-count { color: #666; }
+
+.divider { height: 1px; background: #222; margin: 2px 0; }
+
+/* SELECT ALL / NONE */
+.sel-btns { display: flex; gap: 6px; margin-bottom: 4px; }
+.sel-btn {
+  font-size: 12px; font-family: var(--mono); color: #555;
+  border: none; background: none; cursor: pointer; padding: 0;
+  text-decoration: underline; text-underline-offset: 2px;
+}
+.sel-btn:hover { color: #aaa; }
+
+.sb-stats { margin-top: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.sb-stat { background: #111; border-radius: 5px; padding: 9px 10px; }
+.sb-stat .v { font-family: var(--mono); font-size: 18px; color: #fff; font-weight: 500; line-height: 1; }
+.sb-stat .l { font-size: 11px; color: #444; text-transform: uppercase; letter-spacing: .08em; margin-top: 3px; }
+
+/* ── MAIN ── */
+.main { padding: 32px 32px 64px; min-width: 0; overflow: hidden; }
+
+@media (max-width: 900px) {
+  .shell { grid-template-columns: 1fr; }
+  .sidebar {
+    position: static;
+    min-height: auto;
+    max-height: none;
+  }
+}
+
+.topbar {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 28px; padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.page-title { font-size: 18px; font-weight: 500; }
+.page-sub { font-size: 14px; color: var(--muted); margin-left: auto; font-family: var(--mono); }
+
+/* LEGEND */
+.legend { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 28px; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 13px; color: var(--muted); }
+.legend-pill {
+  height: 14px; padding: 0 7px; border-radius: 10px;
+  font-size: 11px; font-weight: 500; font-family: var(--mono);
+  display: flex; align-items: center; text-transform: uppercase; letter-spacing: .04em;
+}
+
+/* SPRINT BLOCKS */
+.sprint-block { margin-bottom: 40px; }
+.sprint-header {
+  display: flex; align-items: baseline; gap: 10px;
+  margin-bottom: 14px;
+}
+.sprint-name { font-family: var(--mono); font-size: 13px; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.sprint-dates { font-size: 13px; color: var(--muted); opacity: .55; }
+.sprint-count { margin-left: auto; font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.sprint-line { height: 1px; background: var(--border); margin-bottom: 14px; }
+.cards { display: flex; flex-direction: column; gap: 7px; }
+
+/* CARD */
+.card {
+  background: var(--surface); border: 0.5px solid var(--border);
+  border-radius: 8px; padding: 0;
+  display: grid; grid-template-columns: 6px 100px 1fr auto;
+  gap: 0; align-items: stretch;
+  overflow: hidden;
+  transition: border-color .12s;
+}
+.card:hover { border-color: #b8b2aa; }
+
+/* Left color stripe — encodes COP/SUP */
+.card-stripe {
+  border-radius: 0;
+  grid-row: 1;
+}
+.stripe-cop     { background: var(--cop); }
+.stripe-sup     { background: var(--sup); }
+.stripe-cop-sup { background: linear-gradient(to bottom, var(--cop) 50%, var(--sup) 50%); }
+
+/* Inner content columns */
+.card-date {
+  font-family: var(--mono); font-size: 14px; color: var(--muted);
+  line-height: 1.5; padding: 11px 12px 11px 14px; border-right: 0.5px solid var(--border);
+}
+.card-date .cd { color: var(--text); font-weight: 500; }
+.card-date .ct { font-size: 12px; }
+
+.card-body { padding: 11px 14px; }
+.card-subject { font-size: 16px; font-weight: 500; line-height: 1.4; margin-bottom: 3px; }
+.card-summary { font-size: 14px; color: var(--muted); line-height: 1.5; }
+
+.card-meta {
+  display: flex; flex-direction: column; align-items: flex-end;
+  gap: 5px; flex-shrink: 0; padding: 11px 15px 11px 8px;
+}
+
+/* Type pill — encodes email category */
+.type-pill {
+  font-size: 11px; font-family: var(--mono); font-weight: 500;
+  padding: 3px 8px; border-radius: 10px;
+  letter-spacing: .04em; text-transform: uppercase; white-space: nowrap;
+}
+.pill-agenda  { background: var(--agenda-bg);  color: var(--agenda); }
+.pill-recurso { background: var(--recurso-bg); color: var(--recurso); }
+.pill-accion  { background: var(--accion-bg);  color: var(--accion); }
+.pill-cierre  { background: var(--cierre-bg);  color: var(--cierre); }
+
+/* Dest tags — show COP/SUP + lab */
+.dest-tags { display: flex; flex-wrap: wrap; gap: 3px; justify-content: flex-end; }
+.dest-tag {
+  font-size: 11px; font-family: var(--mono); font-weight: 500;
+  padding: 3px 7px; border-radius: 3px; white-space: nowrap;
+}
+.tag-cop-bcn { background: var(--cop-bg); color: var(--cop); }
+.tag-cop-mad { background: var(--cop-bg); color: var(--cop); }
+.tag-sup-bcn { background: var(--sup-bg); color: var(--sup); }
+.tag-sup-mad { background: var(--sup-bg); color: var(--sup); }
+.tag-sup-mlg { background: var(--sup-bg); color: var(--sup); }
+
+/* Lab badge inside dest tag */
+.dest-tag .lab { opacity: .6; margin-left: 3px; }
+
+.no-results {
+  text-align: center; padding: 56px 20px;
+  color: var(--muted); font-family: var(--mono); font-size: 16px;
+}
+
+.card.hidden, .sprint-block.hidden { display: none; }
+
+/* INDIVIDUAL / BCC CARDS — compact row style */
+.ind-section { margin-top: 10px; }
+.ind-label {
+  font-size: 11px; font-family: var(--mono); letter-spacing: .1em;
+  text-transform: uppercase; color: var(--muted); opacity: .6;
+  margin-bottom: 6px; padding-left: 2px;
+}
+.ind-cards { display: flex; flex-direction: column; gap: 4px; }
+.ind-card {
+  background: var(--bg); border: 0.5px solid var(--border);
+  border-radius: 6px; padding: 7px 12px 7px 10px;
+  display: flex; align-items: center; gap: 12px;
+  border-left: 3px solid #C8C0B8;
+}
+.ind-card:hover { border-color: #b0a89f; background: #EDE9E2; }
+.ind-date {
+  font-family: var(--mono); font-size: 12px; color: var(--muted);
+  white-space: nowrap; flex-shrink: 0; min-width: 44px;
+}
+.ind-subject { font-size: 14px; font-weight: 500; flex: 1; line-height: 1.3; }
+.ind-summary { font-size: 13px; color: var(--muted); flex: 2; line-height: 1.4; }
+.ind-badge {
+  font-size: 10px; font-family: var(--mono); font-weight: 500;
+  padding: 2px 7px; border-radius: 10px; white-space: nowrap; flex-shrink: 0;
+  background: #E8E2D8; color: #7A7060;
+}
+.ind-count {
+  font-size: 11px; font-family: var(--mono); color: var(--muted);
+  flex-shrink: 0; white-space: nowrap;
+}
+
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+  <div>
+    <div class="brand-title">COP/SUP Ops</div>
+    <div class="brand-sub">Timeline 25/26</div>
+  </div>
+
+  <!-- TIPO -->
+  <div class="sb-section">
+    <div class="sb-label">Tipo de correo</div>
+    <div class="sel-btns">
+      <button class="sel-btn" onclick="selectAll('type')">todos</button>
+      <button class="sel-btn" onclick="selectNone('type')">ninguno</button>
+    </div>
+    <label class="check-row checked" data-group="type" data-val="agenda">
+      <div class="check-box" style="background:var(--agenda)"></div>
+      <span class="check-dot" style="background:var(--agenda)"></span>
+      <span class="check-label">Agenda de sprint</span>
+    </label>
+    <label class="check-row checked" data-group="type" data-val="recurso">
+      <div class="check-box" style="background:var(--recurso)"></div>
+      <span class="check-dot" style="background:var(--recurso)"></span>
+      <span class="check-label">Recurso / contenido</span>
+    </label>
+    <label class="check-row checked" data-group="type" data-val="accion">
+      <div class="check-box" style="background:var(--accion)"></div>
+      <span class="check-dot" style="background:var(--accion)"></span>
+      <span class="check-label">Acción requerida</span>
+    </label>
+    <label class="check-row checked" data-group="type" data-val="cierre">
+      <div class="check-box" style="background:var(--cierre)"></div>
+      <span class="check-dot" style="background:var(--cierre)"></span>
+      <span class="check-label">Cierre / Demoday</span>
+    </label>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- PROGRAMA -->
+  <div class="sb-section">
+    <div class="sb-label">Programa</div>
+    <div class="sel-btns">
+      <button class="sel-btn" onclick="selectAll('prog')">todos</button>
+      <button class="sel-btn" onclick="selectNone('prog')">ninguno</button>
+    </div>
+    <label class="check-row checked" data-group="prog" data-val="cop">
+      <div class="check-box" style="background:var(--cop)"></div>
+      <span class="check-dot" style="background:var(--cop)"></span>
+      <span class="check-label">COP</span>
+    </label>
+    <label class="check-row checked" data-group="prog" data-val="sup">
+      <div class="check-box" style="background:var(--sup)"></div>
+      <span class="check-dot" style="background:var(--sup)"></span>
+      <span class="check-label">SUP</span>
+    </label>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- LAB -->
+  <div class="sb-section">
+    <div class="sb-label">Laboratorio</div>
+    <div class="sel-btns">
+      <button class="sel-btn" onclick="selectAll('lab')">todos</button>
+      <button class="sel-btn" onclick="selectNone('lab')">ninguno</button>
+    </div>
+    <label class="check-row checked" data-group="lab" data-val="bcn">
+      <div class="check-box" style="background:var(--bcn)"></div>
+      <span class="check-dot" style="background:var(--bcn)"></span>
+      <span class="check-label">Barcelona</span>
+    </label>
+    <label class="check-row checked" data-group="lab" data-val="mad">
+      <div class="check-box" style="background:var(--mad)"></div>
+      <span class="check-dot" style="background:var(--mad)"></span>
+      <span class="check-label">Madrid</span>
+    </label>
+    <label class="check-row checked" data-group="lab" data-val="mlg">
+      <div class="check-box" style="background:var(--mlg)"></div>
+      <span class="check-dot" style="background:var(--mlg)"></span>
+      <span class="check-label">Málaga</span>
+    </label>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- IND / BCC TOGGLE -->
+  <div class="sb-section">
+    <div class="sb-label">Recordatorios</div>
+    <label class="check-row checked" id="toggle-ind-row" data-group="ind" data-val="ind">
+      <div class="check-box" style="background:#888"></div>
+      <span class="check-dot" style="background:#888"></span>
+      <span class="check-label">Individuales / BCC</span>
+    </label>
+  </div>
+  <div class="sb-stats">
+    <div class="sb-stat"><div class="v">37</div><div class="l">Total</div></div>
+    <div class="sb-stat"><div class="v" id="st-visible">37</div><div class="l">Visibles</div></div>
+    <div class="sb-stat"><div class="v">6</div><div class="l">Sprints</div></div>
+    <div class="sb-stat"><div class="v">3</div><div class="l">Labs</div></div>
+  </div>
+</aside>
+  <main class="main">
+    <div class="topbar">
+      <span class="page-title">Timeline de comunicaciones operativas</span>
+      <span class="page-sub">copsup@ → equipos · 25/26</span>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><span class="legend-pill pill-agenda">agenda</span> Agenda de sprint</div>
+      <div class="legend-item"><span class="legend-pill pill-recurso">recurso</span> Contenido</div>
+      <div class="legend-item"><span class="legend-pill pill-accion">acción</span> Acción requerida</div>
+      <div class="legend-item"><span class="legend-pill pill-cierre">cierre</span> Cierre / Demoday</div>
+    </div>
+    <div id="timeline"></div>
+    <div id="no-results" class="no-results" style="display:none">Sin resultados para los filtros seleccionados</div>
+  </main>
+</div>
+<script>
+const DATA = [
+  {d:"2025-07-28",t:"14:20",sprint:"pre",type:"recurso",dest:["copbcn","copmad"],s:"🚀 Equipos y empresas COP ya disponibles",sum:"Comunicación de equipos y empresas asignadas antes del inicio del programa"},
+  {d:"2025-09-19",t:"14:09",sprint:"sp1",type:"agenda",dest:["supbcn"],s:"📅 Agenda Sprint 1 - SUP Barcelona",sum:"Sesiones y fechas del primer sprint para SUP Barcelona"},
+  {d:"2025-09-19",t:"14:11",sprint:"sp1",type:"agenda",dest:["copbcn"],s:"📅 Agenda Sprint 1 - COP Barcelona",sum:"Sesiones y fechas del primer sprint para COP Barcelona"},
+  {d:"2025-09-19",t:"14:16",sprint:"sp1",type:"agenda",dest:["copbcn"],s:"Re: 📅 Agenda Sprint 1 - COP Barcelona",sum:"Corrección de fechas del Critic en la agenda enviada previamente"},
+  {d:"2025-09-19",t:"14:19",sprint:"sp1",type:"agenda",dest:["supbcn"],s:"Re: 📅 Agenda Sprint 1 - SUP Barcelona",sum:"Corrección de hora del Elevator Pitch en la agenda de SUP Barcelona"},
+  {d:"2025-09-23",t:"14:41",sprint:"sp1",type:"agenda",dest:["supmlg"],s:"📅 Agenda Sprint 1 - SUP Málaga",sum:"Sesiones y fechas del primer sprint para SUP Málaga"},
+  {d:"2025-09-23",t:"14:46",sprint:"sp1",type:"agenda",dest:["copmad"],s:"📅 Agenda Sprint 1 - COP Madrid",sum:"Sesiones y fechas del primer sprint para COP Madrid"},
+  {d:"2025-09-23",t:"14:55",sprint:"sp1",type:"agenda",dest:["supmad"],s:"📅 Agenda Sprint 1 - SUP Madrid",sum:"Sesiones y fechas del primer sprint para SUP Madrid"},
+  {d:"2025-09-25",t:"14:02",sprint:"sp1",type:"accion",dest:["copbcn","copmad","supbcn"],s:"Preparación Elevator Pitch – Sprint 1",sum:"Pautas y expectativas para preparar el Elevator Pitch de cierre del Sprint 1"},
+  {d:"2025-09-29",t:"12:57",sprint:"sp1",type:"accion",dest:["copbcn","copmad","supbcn"],s:"💥 Oportunidad: Erasmus for Young Entrepreneurs",sum:"Convocatoria a sesión informativa sobre el programa Erasmus for Young Entrepreneurs"},
+  {d:"2025-10-09",t:"11:30",sprint:"sp2",type:"recurso",dest:["copbcn","copmad","supbcn"],s:"✏️ Guía desarrollo de LPs COP/SUP",sum:"Instrucciones completas para desarrollar Learning Points de cada sprint"},
+  {d:"2025-10-09",t:"16:32",sprint:"sp2",type:"agenda",dest:["copmad"],s:"📅 Agenda Sprint 2 - COP Madrid",sum:"Próximos encuentros del segundo sprint para COP Madrid"},
+  {d:"2025-10-09",t:"16:35",sprint:"sp2",type:"agenda",dest:["supbcn"],s:"📅 Agenda Sprint 2 - SUP Barcelona",sum:"Próximos encuentros del segundo sprint para SUP Barcelona"},
+  {d:"2025-10-09",t:"16:38",sprint:"sp2",type:"agenda",dest:["supmad"],s:"📅 Agenda Sprint 2 - SUP Madrid",sum:"Próximos encuentros del segundo sprint para SUP Madrid"},
+  {d:"2025-10-09",t:"16:40",sprint:"sp2",type:"agenda",dest:["copbcn"],s:"📅 Agenda Sprint 2 - COP Barcelona",sum:"Próximos encuentros del segundo sprint para COP Barcelona"},
+  {d:"2025-10-16",t:"11:57",sprint:"sp2",type:"recurso",dest:["copbcn","copmad"],s:"Recomendaciones de 3 libros - Sprint 2 COP",sum:"Tres recomendaciones de libros del ponente del Coffee With del Sprint 2"},
+  {d:"2025-10-24",t:"17:02",sprint:"sp3",type:"agenda",dest:["copbcn"],s:"📅 Agenda Sprint 3 - COP Barcelona",sum:"Kick off y sesiones del tercer sprint para COP Barcelona"},
+  {d:"2025-10-24",t:"17:02",sprint:"sp3",type:"agenda",dest:["supbcn"],s:"📅 Agenda Sprint 3 - SUP Barcelona",sum:"Kick off y sesiones del tercer sprint para SUP Barcelona"},
+  {d:"2025-10-27",t:"12:08",sprint:"sp3",type:"agenda",dest:["supmad"],s:"📅 Agenda Sprint 3 - SUP Madrid",sum:"Masterclass y sesiones del tercer sprint para SUP Madrid"},
+  {d:"2025-10-27",t:"12:22",sprint:"sp3",type:"agenda",dest:["copmad"],s:"📅 Agenda Sprint 3 - COP Madrid",sum:"Masterclass y sesiones del tercer sprint para COP Madrid"},
+  {d:"2025-10-27",t:"12:42",sprint:"sp3",type:"agenda",dest:["supmlg"],s:"📅 Agenda Sprint 3 - SUP Málaga",sum:"Masterclass y sesiones del tercer sprint para SUP Málaga"},
+  {d:"2025-10-30",t:"12:09",sprint:"sp3",type:"accion",dest:["copbcn","copmad","supmlg"],s:"Acceso a la plataforma de Product Hackers ✅",sum:"Reactivación del acceso a contenidos de la plataforma Product Hackers"},
+  {d:"2025-11-04",t:"12:15",sprint:"sp3",type:"accion",dest:["copbcn","copmad","supmad"],s:"Form prework Critic SP3",sum:"Formulario obligatorio de prework antes de los Critics del Sprint 3"},
+  {d:"2025-11-24",t:"09:01",sprint:"sp4",type:"agenda",dest:["copmad"],s:"📅 Agenda Sprint 4 - COP Madrid",sum:"Sesiones y contenidos del cuarto sprint para COP Madrid"},
+  {d:"2025-11-24",t:"09:02",sprint:"sp4",type:"agenda",dest:["copbcn"],s:"📅 Agenda Sprint 4 - COP Barcelona",sum:"Sesiones y contenidos del cuarto sprint para COP Barcelona"},
+  {d:"2025-11-24",t:"09:03",sprint:"sp4",type:"agenda",dest:["supbcn"],s:"📅 Agenda Sprint 4 - SUP Barcelona",sum:"Sesiones y contenidos del cuarto sprint para SUP Barcelona"},
+  {d:"2025-11-24",t:"09:07",sprint:"sp4",type:"agenda",dest:["supmad"],s:"📅 Agenda Sprint 4 - SUP Madrid",sum:"Sesiones y contenidos del cuarto sprint para SUP Madrid"},
+  {d:"2025-11-24",t:"09:11",sprint:"sp4",type:"agenda",dest:["supmlg"],s:"📅 Agenda Sprint 4 - SUP Málaga",sum:"Sesiones y contenidos del cuarto sprint para SUP Málaga"},
+  {d:"2025-11-26",t:"15:55",sprint:"sp5",type:"recurso",dest:["copbcn","copmad","supbcn"],s:"☕ Coffee With Miguel Bemfica: creatividad con impacto",sum:"Invitación a sesión especial con Miguel Bemfica sobre creatividad con impacto en negocio"},
+  {d:"2025-12-05",t:"11:04",sprint:"sp5",type:"agenda",dest:["copbcn","supbcn"],s:"📅 Agenda Sprint 5 - COP & SUP Barcelona",sum:"Agenda del sprint final para COP y SUP Barcelona"},
+  {d:"2025-12-05",t:"11:06",sprint:"sp5",type:"agenda",dest:["copmad","supmad"],s:"📅 Agenda Sprint 5 - COP & SUP Madrid",sum:"Agenda del sprint final para COP y SUP Madrid"},
+  {d:"2025-12-05",t:"11:07",sprint:"sp5",type:"agenda",dest:["supmlg"],s:"📅 Agenda Sprint 5 - SUP Málaga",sum:"Agenda del sprint final para SUP Málaga"},
+  {d:"2025-12-09",t:"16:37",sprint:"cierre",type:"cierre",dest:["copbcn","copmad","supbcn"],s:"🚀 Recta final: Demoday, Entregas y Escaletas",sum:"Orientaciones para la exposición del Demoday y las entregas finales"},
+  {d:"2025-12-11",t:"14:50",sprint:"cierre",type:"recurso",dest:["copbcn","copmad","supbcn"],s:"Presentación Masterclass de Oratoria",sum:"Recursos de la Masterclass de Oratoria de Borja Nicolau para preparar el Demoday"},
+  {d:"2025-12-12",t:"12:16",sprint:"cierre",type:"cierre",dest:["copbcn","copmad","supbcn"],s:"Re: 🚀 Recta final: Demoday, Entregas y Escaletas",sum:"Apunte logístico: presentaciones centralizadas en un solo ordenador para el Demoday"},
+  {d:"2025-12-17",t:"12:22",sprint:"cierre",type:"cierre",dest:["copbcn","copmad","supbcn"],s:"🚀 Recta final COP/SUP: Demoday y Evaluaciones",sum:"Criterios de evaluación del Demoday y recordatorio de entregas finales"},
+  {d:"2026-01-15",t:"17:09",sprint:"cierre",type:"accion",dest:["copbcn","copmad"],s:"🏁 Cierre de etapa COP y entrega de informe",sum:"Instrucciones finales para cerrar la etapa COP y entregar el informe"},
+];
+
+const SPRINTS = [
+  {id:"pre",    label:"Previo",   dates:"Jul 2025"},
+  {id:"sp1",    label:"Sprint 1", dates:"Sep 2025"},
+  {id:"sp2",    label:"Sprint 2", dates:"Oct 2025"},
+  {id:"sp3",    label:"Sprint 3", dates:"Oct–Nov 2025"},
+  {id:"sp4",    label:"Sprint 4", dates:"Nov 2025"},
+  {id:"sp5",    label:"Sprint 5", dates:"Nov–Dic 2025"},
+  {id:"cierre", label:"Cierre",   dates:"Dic 2025–Ene 2026"},
+];
+
+const DEST_META = {
+  copbcn: {label:"COP BCN", prog:"cop", lab:"bcn", cls:"tag-cop-bcn"},
+  copmad: {label:"COP MAD", prog:"cop", lab:"mad", cls:"tag-cop-mad"},
+  supbcn: {label:"SUP BCN", prog:"sup", lab:"bcn", cls:"tag-sup-bcn"},
+  supmad: {label:"SUP MAD", prog:"sup", lab:"mad", cls:"tag-sup-mad"},
+  supmlg: {label:"SUP MLG", prog:"sup", lab:"mlg", cls:"tag-sup-mlg"},
+};
+
+const TYPE_LABELS = {agenda:"Agenda", recurso:"Recurso", accion:"Acción", cierre:"Cierre"};
+
+function getChecked(group) {
+  return [...document.querySelectorAll(`.check-row.checked[data-group="${group}"]`)]
+    .map(el => el.dataset.val);
+}
+
+function selectAll(group) {
+  document.querySelectorAll(`.check-row[data-group="${group}"]`).forEach(el => el.classList.add('checked'));
+  render();
+}
+
+function selectNone(group) {
+  document.querySelectorAll(`.check-row[data-group="${group}"]`).forEach(el => el.classList.remove('checked'));
+  render();
+}
+
+document.querySelectorAll('.check-row').forEach(row => {
+  row.addEventListener('click', () => {
+    row.classList.toggle('checked');
+    render();
+  });
+});
+
+const IND_DATA = [
+  {d:"2025-09-09",sprint:"sp1",s:"Falta confirmar call con empresa",sum:"Recordatorio individual: confirmar la primera llamada con la empresa reto",n:1},
+  {d:"2025-09-22",sprint:"sp1",s:"Falta reservar Project Review Sprint 1",sum:"Recordatorio BCC: reservar la Project Review del Sprint 1",n:2},
+  {d:"2025-10-09",sprint:"sp2",s:"Falta reservar Project Review Sprint 2",sum:"Recordatorio BCC: reservar la Project Review del Sprint 2",n:1},
+  {d:"2025-10-15",sprint:"sp2",s:"Falta rellenar form prework Critic",sum:"Recordatorio BCC: rellenar el formulario de prework antes del Critic",n:1},
+  {d:"2025-11-04",sprint:"sp3",s:"Falta reservar Project Review Sprint 3",sum:"Recordatorio individual: reservar la Project Review del Sprint 3",n:1},
+  {d:"2025-11-04",sprint:"sp3",s:"Falta rellenar form billetes Demoday",sum:"Recordatorio BCC: rellenar el formulario para el viaje al Demoday",n:1},
+  {d:"2025-11-17",sprint:"sp4",s:"Proceso certificación startups ENISA",sum:"Información sobre el proceso de certificación de startups con ENISA",n:1},
+  {d:"2025-11-20",sprint:"sp4",s:"Falta de asistencia a masterclass",sum:"Gestión individual por falta de asistencia a la masterclass del Sprint 4",n:1},
+  {d:"2025-11-25",sprint:"sp4",s:"Falta reservar Project Review Sprint 4",sum:"Recordatorio individual: reservar la Project Review del Sprint 4",n:1},
+  {d:"2025-12-09",sprint:"sp5",s:"Falta reservar mentoría Oratoria",sum:"Recordatorio individual: reservar mentoría de oratoria antes del Demoday",n:2},
+  {d:"2025-11-11",sprint:"cierre",s:"Billetes viaje Demoday (BCN ↔ MAD)",sum:"Envío individual de billetes de tren para el Demoday en la otra ciudad",n:22},
+  {d:"2025-12-16",sprint:"cierre",s:"Falta presentación Demoday",sum:"Recordatorio urgente a equipos que no han enviado la presentación del Demoday",n:16},
+  {d:"2026-01-12",sprint:"cierre",s:"Encuesta Leinner COP/SUP 25/26",sum:"Encuesta de valoración del programa enviada a todos los leanners vía BCC",n:4},
+];
+
+function fmtDate(d) {
+  if (!d) return '';
+  const parts = d.substring(0,10).split('-');
+  return parts[2] + '/' + parts[1];
+}
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function emailMatchesFilters(e, types, progs, labs) {
+  if (!types.includes(e.type)) return false;
+  // email passes if at least one dest matches both active prog AND active lab
+  return e.dest.some(d => {
+    const m = DEST_META[d];
+    return progs.includes(m.prog) && labs.includes(m.lab);
+  });
+}
+
+function visibleDests(e, progs, labs) {
+  return e.dest.filter(d => {
+    const m = DEST_META[d];
+    return progs.includes(m.prog) && labs.includes(m.lab);
+  });
+}
+
+function render() {
+  const types = getChecked('type');
+  const progs = getChecked('prog');
+  const labs  = getChecked('lab');
+  const showInd = document.getElementById('toggle-ind-row') && document.getElementById('toggle-ind-row').classList.contains('checked');
+
+  const container = document.getElementById('timeline');
+  const noRes = document.getElementById('no-results');
+  let totalVisible = 0;
+  let html = '';
+
+  SPRINTS.forEach(sp => {
+    const emails = DATA.filter(e => e.sprint === sp.id && emailMatchesFilters(e, types, progs, labs));
+    const indEmails = showInd ? IND_DATA.filter(e => e.sprint === sp.id) : [];
+    if (emails.length === 0 && indEmails.length === 0) return;
+    totalVisible += emails.length + indEmails.length;
+
+    const cards = emails.map(e => {
+      const dests = visibleDests(e, progs, labs);
+      const hasC = dests.some(d => DEST_META[d].prog === 'cop');
+      const hasS = dests.some(d => DEST_META[d].prog === 'sup');
+      const stripeClass = hasC && hasS ? 'stripe-cop-sup' : hasC ? 'stripe-cop' : 'stripe-sup';
+      const destTags = dests.map(d =>
+        `<span class="dest-tag ${DEST_META[d].cls}">${DEST_META[d].label}</span>`
+      ).join('');
+      return `<div class="card" data-type="${e.type}">
+        <div class="card-stripe ${stripeClass}"></div>
+        <div class="card-date">
+          <div class="cd">${fmtDate(e.d)}</div>
+          <div class="ct">${e.t}</div>
+        </div>
+        <div class="card-body">
+          <div class="card-subject">${esc(e.s)}</div>
+          <div class="card-summary">${esc(e.sum)}</div>
+        </div>
+        <div class="card-meta">
+          <span class="type-pill pill-${e.type}">${TYPE_LABELS[e.type]}</span>
+          <div class="dest-tags">${destTags}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    let indSection = '';
+    if (indEmails.length > 0) {
+      const indCards = indEmails.map(e => `
+        <div class="ind-card">
+          <span class="ind-date">${fmtDate(e.d)}</span>
+          <span class="ind-subject">${esc(e.s)}</span>
+          <span class="ind-summary">${esc(e.sum)}</span>
+          ${e.n > 1 ? `<span class="ind-count">×${e.n}</span>` : ''}
+        </div>`).join('');
+      indSection = `<div class="ind-section">
+        <div class="ind-label">Recordatorios individuales / BCC</div>
+        <div class="ind-cards">${indCards}</div>
+      </div>`;
+    }
+
+    html += `<div class="sprint-block">
+      <div class="sprint-header">
+        <span class="sprint-name">${sp.label}</span>
+        <span class="sprint-dates">${sp.dates}</span>
+        <span class="sprint-count">${emails.length + indEmails.length} correo${(emails.length+indEmails.length)!==1?'s':''}</span>
+      </div>
+      <div class="sprint-line"></div>
+      <div class="cards">${cards}</div>
+      ${indSection}
+    </div>`;
+  });
+
+  container.innerHTML = html || '';
+  noRes.style.display = totalVisible === 0 ? 'block' : 'none';
+  document.getElementById('st-visible').textContent = totalVisible;
+}
+
+render();
+</script>
+</body>
+</html>
