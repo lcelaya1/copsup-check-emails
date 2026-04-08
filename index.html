@@ -308,6 +308,14 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); font
   line-height: 1.6;
 }
 
+/* EMPRESA TAGS */
+.empresa-tags { display: flex; flex-wrap: wrap; gap: 3px; justify-content: flex-end; }
+.empresa-tag {
+  font-size: 11px; font-family: var(--mono); font-weight: 500;
+  padding: 3px 7px; border-radius: 3px; white-space: nowrap;
+  background: #EBF4FF; color: #1A5C8A;
+}
+
 </style>
 </head>
 <body>
@@ -473,10 +481,26 @@ const DATA = [
 ];
 
 const ENTERPRISE_DATA = [
+  {d:"2025-07-04",sprint:"pre",
+   s:"Reunión de presentación con los LEINNers – Empresas reto",
+   sum:"Coordinación de las reuniones de presentación entre los LEINNers y los equipos de las empresas reto",
+   empresas:["Danone","TOUS"]},
+  {d:"2025-07-04",sprint:"pre",
+   s:"Situación y próximos pasos – Empresas reto",
+   sum:"Correo de seguimiento a las empresas reto sobre el estado del proceso COP y próximos pasos del programa",
+   empresas:["Danone","VISA","Fundación Pegasus","INMESA","SocialNest","21Gramos","Anaya","TOUS","SETGA"]},
+  {d:"2025-09-02",sprint:"sp1",
+   s:"Arranque del programa COP 25-26 – Empresas reto",
+   sum:"Coordinación con las empresas reto para el arranque del programa COP 25-26 y confirmación de los equipos de leinners asignados",
+   empresas:["Anaya","21Gramos"]},
+  {d:"2025-09-30",sprint:"sp1",
+   s:"Documentación de apoyo para COP",
+   sum:"Envío de documentación y recursos de apoyo para el desarrollo del programa COP",
+   empresas:["VISA"]},
   {d:"2025-10-30",sprint:"sp2",
    s:"¡Acabamos el segundo sprint! ¿Cómo va el proceso?",
    sum:"Seguimiento a todas las empresas reto tras finalizar el Sprint 2, preguntando por el avance de los equipos",
-   empresas:["Danone","INMESA","Fund. Pegasus","Social Nest","21 Gramos","Setga"]},
+   empresas:["Danone","INMESA","Fundación Pegasus","SocialNest","21Gramos","SETGA"]},
   {d:"2025-12-05",sprint:"cierre",
    s:"Invitación al Demo Day",
    sum:"Invitación a las empresas reto para asistir al Demo Day del programa",
